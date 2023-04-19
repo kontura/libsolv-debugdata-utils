@@ -81,7 +81,8 @@ pprint.pprint(pkgs_to_keep_per_repo)
 print("Processing repo:")
 for repo in repos:
     pruned_repo = []
-    repo_name = repo.split('.')[0]
+    # remove ending ".repo.gz"
+    repo_name = repo[:-8]
     if pkgs_to_keep_per_repo.get(repo_name) is None:
         continue
     print(repo_name)
