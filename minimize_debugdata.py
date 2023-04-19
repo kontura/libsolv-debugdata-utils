@@ -65,6 +65,8 @@ for f in onlyfiles:
         with open(path_in, "rt") as fin:
             result = fin.readlines()
             for line in result:
+                # remove ending new line
+                line = line[:-1]
                 if line.startswith("job "):
                     elems = line.split(" ")
                     for elem in elems:
