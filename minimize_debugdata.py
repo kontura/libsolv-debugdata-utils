@@ -50,6 +50,10 @@ for f in onlyfiles:
                     pkgs_to_keep_per_repo[repo_name] = list_of_pkgs
     copyfile(path_in, path_out)
 
+print("Keeping pkgs:")
+print(pkgs_to_keep_per_repo)
+
+print("Processing repo:")
 for repo in repos:
     pruned_repo = []
     repo_name = repo.split('.')[0]
