@@ -7,6 +7,7 @@ import gzip
 import os
 import shutil
 from shutil import copyfile
+import pprint
 
 def add_pkg_to_dict(pkgs_to_keep_per_repo, pkg_repo_line):
     pkg_name = pkg_repo_line.split('@', 1)[0]
@@ -73,7 +74,7 @@ for f in onlyfiles:
     copyfile(path_in, path_out)
 
 print("Keeping pkgs:")
-print(pkgs_to_keep_per_repo)
+pprint.pprint(pkgs_to_keep_per_repo)
 
 print("Processing repo:")
 for repo in repos:
