@@ -8,6 +8,17 @@ import os
 import shutil
 from shutil import copyfile
 
+def add_pkg_to_dict(pkgs_to_keep_per_repo, pkg_repo_line):
+    pkg_name = pkg_repo_line.split('@', 1)[0]
+    repo_name = pkg_repo_line.split('@', 1)[1]
+    list_of_pkgs = pkgs_to_keep_per_repo.get(repo_name)
+    if list_of_pkgs is None:
+        list_of_pkgs = [pkg_name]
+    else:
+        list_of_pkgs.append(pkg_name)
+    pkgs_to_keep_per_repo[repo_name] = list_of_pkgs
+
+
 if len(sys.argv) != 3:
     print("""Goes through all repos (expect for @System) in debugdata and removes all packages
 that are not present in solver.result.
@@ -39,15 +50,16 @@ for f in onlyfiles:
                 # TODO(amatej): This just handles install for now
                 if line.startswith("install "):
                     # remove install
-                    pkg_repo = (line[8:])
-                    pkg_name = pkg_repo.split('@')[0]
-                    repo_name = pkg_repo.split('@')[1]
-                    list_of_pkgs = pkgs_to_keep_per_repo.get(repo_name)
-                    if list_of_pkgs is None:
-                        list_of_pkgs = [pkg_name]
-                    else:
-                        list_of_pkgs.append(pkg_name)
-                    pkgs_to_keep_per_repo[repo_name] = list_of_pkgs
+                    pkg_repo_line = (line[8:])
+                    add_pkg_to_dict(pkgs_to_keep_per_repo, pkg_repo_line)
+
+                if line.startswith("reinstall "):
+                    # remove reinstall
+                    pkgs_repo = (line[10:])
+                    installed_pkg_line = pkgs_repo.split(' ')[0]
+                    reinstall_pkg_line = pkgs_repo.split(' ')[1]
+                    add_pkg_to_dict(pkgs_to_keep_per_repo, installed_pkg_line)
+                    add_pkg_to_dict(pkgs_to_keep_per_repo, reinstall_pkg_line)
     copyfile(path_in, path_out)
 
 print("Keeping pkgs:")
