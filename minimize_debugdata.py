@@ -60,6 +60,16 @@ for f in onlyfiles:
                     reinstall_pkg_line = pkgs_repo.split(' ')[1]
                     add_pkg_to_dict(pkgs_to_keep_per_repo, installed_pkg_line)
                     add_pkg_to_dict(pkgs_to_keep_per_repo, reinstall_pkg_line)
+    if f.endswith("testcase.t"):
+        with open(path_in, "rt") as fin:
+            result = fin.readlines()
+            for line in result:
+                if line.startswith("job "):
+                    elems = line.split(" ")
+                    for elem in elems:
+                        if '@' in elem:
+                            add_pkg_to_dict(pkgs_to_keep_per_repo, elem)
+
     copyfile(path_in, path_out)
 
 print("Keeping pkgs:")
