@@ -61,6 +61,13 @@ for f in onlyfiles:
                     reinstall_pkg_line = pkgs_repo.split(' ')[1]
                     add_pkg_to_dict(pkgs_to_keep_per_repo, installed_pkg_line)
                     add_pkg_to_dict(pkgs_to_keep_per_repo, reinstall_pkg_line)
+                if line.startswith("upgrade "):
+                    # remove upgrade
+                    pkgs_repo = (line[8:])
+                    from_upgraded_pkg_line = pkgs_repo.split(' ')[0]
+                    to_upgrade_pkg_line = pkgs_repo.split(' ')[1]
+                    add_pkg_to_dict(pkgs_to_keep_per_repo, from_upgraded_pkg_line)
+                    add_pkg_to_dict(pkgs_to_keep_per_repo, to_upgrade_pkg_line)
     if f.endswith("testcase.t"):
         with open(path_in, "rt") as fin:
             result = fin.readlines()
