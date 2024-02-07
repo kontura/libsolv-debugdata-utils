@@ -22,7 +22,7 @@ def add_pkg_to_dict(pkgs_to_keep_per_repo, pkg_repo_line):
 
 if len(sys.argv) != 3:
     print("""Goes through all repos (expect for @System) in debugdata and removes all packages
-that are not present in solver.result.
+that are not present in solver.result or in testcase.t jobs.
 
 Usage: minimize_debugdata.py <debugdata_path_rpms> <output_debugdata_rpms_path>
 
