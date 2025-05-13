@@ -52,7 +52,7 @@ Usage: minimize_debugdata.py <debugdata_path_rpms> <output_debugdata_rpms_path>
 
 Hint:
 If we have 2 different results (like picking older dependency in one run vs not in another)
-it is useful to combine both results in solver.result and minimize the debudata.
+it is useful to combine both results in solver.result and minimize the debugdata.
 """)
     sys.exit(0)
 
