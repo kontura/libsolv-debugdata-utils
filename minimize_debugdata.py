@@ -136,12 +136,7 @@ for repo in repos:
         if line.startswith("=Vnd:"):
             keep = False
         if line.startswith("=Pkg: "):
-            # remove ending new line
-            pkg = line[:-1]
-            # remove "=Pkg: " and make it a nevra
-            pkg = pkg[6:].replace(' ', '-')
-            s_spl = pkg.split("-")
-            pkg = "-".join(s_spl[:-1]) + '.' + s_spl[-1]
+            pkg = solv_line_pkg_to_nevra(line)
             if pkg in pkgs_to_keep_per_repo[repo_name]:
                 keep = True
             else:
