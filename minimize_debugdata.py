@@ -100,8 +100,6 @@ for repo in repos:
     repo_contents = []
     with gzip.open(join(sys.argv[1], repo), "rt") as fin:
         repo_contents = fin.readlines()
-    # remove first line: "=Ver: 3.0"
-    #del repo_contents[0]
     keep = True
     for line in repo_contents:
         if line.startswith("=Pkg: "):
