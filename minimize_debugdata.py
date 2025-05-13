@@ -46,6 +46,7 @@ for f in onlyfiles:
     if f.endswith(".repo.gz") and not f.endswith("@System.repo.gz"):
         repos.append(f)
         continue
+
     if f.endswith("solver.result"):
         with open(path_in, "rt") as fin:
             result = fin.readlines()
@@ -57,7 +58,9 @@ for f in onlyfiles:
                     # remove install
                     pkg_repo_line = (line[8:])
                     add_pkg_to_dict(pkgs_to_keep_per_repo, pkg_repo_line)
-
+                if line.startswith("erase "):
+                    pkg_repo_line = (line[6:])
+                    add_pkg_to_dict(pkgs_to_keep_per_repo, pkg_repo_line)
                 if line.startswith("reinstall "):
                     # remove reinstall
                     pkgs_repo = (line[10:])
@@ -72,6 +75,15 @@ for f in onlyfiles:
                     to_upgrade_pkg_line = pkgs_repo.split(' ')[1]
                     add_pkg_to_dict(pkgs_to_keep_per_repo, from_upgraded_pkg_line)
                     add_pkg_to_dict(pkgs_to_keep_per_repo, to_upgrade_pkg_line)
+                if line.startswith("problem "):
+                    # For example:
+                    # problem 3f47a1e1 info package sssd-ipa-2.9.4-3.el8_10.x86_64 requires sssd-common = 2.9.4-3.el8_10, but none of the providers can be installed
+                    # problem 3f47a1e1 solution 008890f1 allow libsss_autofs-2.7.3-4.el8_7.1.x86_64@@System
+                    problem_type = (line[17:])
+                    if problem_type.startswith("solution "):
+                        pkgs_repo = (problem_type[24:])
+                        add_pkg_to_dict(pkgs_to_keep_per_repo, pkgs_repo)
+
     if f.endswith("testcase.t"):
         with open(path_in, "rt") as fin:
             result = fin.readlines()
