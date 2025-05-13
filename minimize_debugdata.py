@@ -19,6 +19,23 @@ def add_pkg_to_dict(pkgs_to_keep_per_repo, pkg_repo_line):
         list_of_pkgs.append(pkg_name)
     pkgs_to_keep_per_repo[repo_name] = list_of_pkgs
 
+def nevra_to_name(nevra):
+    nevr = nevra.rpartition(".")[0] # remove .arch
+    nev = nevr.rpartition("-")[0] # remove -release
+    return nev.rpartition("-")[0] # remove -epoch:version
+
+def should_keep(pkg_full_nevra, pkg_nevra_list, keep_all_versions):
+    if (not keep_all_versions):
+        return pkg_full_nevra in pkg_nevra_list
+    name = nevra_to_name(pkg_full_nevra)
+    name_list = []
+    for p in pkg_nevra_list:
+        name_list.append(nevra_to_name(p))
+    if name in name_list:
+        return True
+    else:
+        return False
+
 def solv_line_pkg_to_nevra(line):
     # remove ending new line
     pkg = line[:-1]
@@ -137,10 +154,9 @@ for repo in repos:
             keep = False
         if line.startswith("=Pkg: "):
             pkg = solv_line_pkg_to_nevra(line)
-            if pkg in pkgs_to_keep_per_repo[repo_name]:
-                keep = True
-            else:
-                keep = False
+            keep = False
+            keep |= should_keep(pkg, pkgs_to_keep_per_repo[repo_name], 1)
+            keep |= should_keep(pkg, system_repo_pkgs, 0)
         if keep:
             pruned_repo.append(line)
 
