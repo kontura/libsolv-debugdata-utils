@@ -24,18 +24,6 @@ def nevra_to_name(nevra):
     nev = nevr.rpartition("-")[0] # remove -release
     return nev.rpartition("-")[0] # remove -epoch:version
 
-def should_keep(pkg_full_nevra, pkg_nevra_list, keep_all_versions):
-    if (not keep_all_versions):
-        return pkg_full_nevra in pkg_nevra_list
-    name = nevra_to_name(pkg_full_nevra)
-    name_list = []
-    for p in pkg_nevra_list:
-        name_list.append(nevra_to_name(p))
-    if name in name_list:
-        return True
-    else:
-        return False
-
 def solv_line_pkg_to_nevra(line):
     # remove ending new line
     pkg = line[:-1]
@@ -49,7 +37,7 @@ parser = argparse.ArgumentParser(description="Goes through all repos (expect for
 
 parser.add_argument("input_dir", help="Path to the rpms directory in debugdata to minimize")
 parser.add_argument("output_dir", help="Directory name where the minimized debugdata will be written")
-parser.add_argument("--keep-all-versions", action="store_true", help="Keep packages from solver.result and testcase.t jobs in all versions")
+parser.add_argument("--keep-all", action="store_true", help="Keep packages from solver.result and testcase.t jobs in all epochs, versions, releases and arches")
 parser.add_argument("--keep-installed", action="store_true", help="In addition to packages from solver.result and testcase.t also keep packages from @System (installed)")
 
 args = parser.parse_args()
@@ -129,8 +117,25 @@ for f in onlyfiles:
 
     copyfile(path_in, path_out)
 
+
+if args.keep_all_versions:
+    pkg_names_to_keep_per_repo = {}
+    for repo_id, pkgs in pkgs_to_keep_per_repo.items():
+        name_list = set()
+        for p in pkgs:
+            name_list.add(nevra_to_name(p))
+        pkg_names_to_keep_per_repo[repo_id] = name_list
+    pkgs_to_keep_per_repo = pkg_names_to_keep_per_repo
+
+    name_list = set()
+    for p in system_repo_pkgs:
+        name_list.add(nevra_to_name(p))
+    system_repo_pkgs = name_list
+
 print("Keeping pkgs:")
 pprint.pprint(pkgs_to_keep_per_repo)
+if (args.keep_installed):
+    pprint.pprint({"@System": system_repo_pkgs})
 
 print("Processing repo:")
 for repo in repos:
@@ -152,10 +157,12 @@ for repo in repos:
             keep = False
         if line.startswith("=Pkg: "):
             pkg = solv_line_pkg_to_nevra(line)
+            if args.keep_all_versions:
+                pkg = nevra_to_name(pkg)
             keep = False
-            keep |= should_keep(pkg, pkgs_to_keep_per_repo[repo_name], args.keep_all_versions)
+            keep |= pkg in pkgs_to_keep_per_repo[repo_name]
             if (args.keep_installed):
-                keep |= should_keep(pkg, system_repo_pkgs, args.keep_all_versions)
+                keep |= pkg in system_repo_pkgs
         if keep:
             pruned_repo.append(line)
 
