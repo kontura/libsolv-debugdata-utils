@@ -114,6 +114,11 @@ for repo in repos:
         repo_contents = fin.readlines()
     keep = True
     for line in repo_contents:
+        if line.startswith("=Sum:"):
+            continue
+        # Drop everthing after vendor: Tim and all files
+        if line.startswith("=Vnd:"):
+            keep = False
         if line.startswith("=Pkg: "):
             # remove ending new line
             pkg = line[:-1]
