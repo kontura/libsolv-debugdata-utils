@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import sys
 from os import listdir
 from os.path import isfile, join
 import gzip
@@ -8,6 +7,7 @@ import os
 import shutil
 from shutil import copyfile
 import pprint
+import argparse
 
 def add_pkg_to_dict(pkgs_to_keep_per_repo, pkg_repo_line):
     pkg_name = pkg_repo_line.split('@', 1)[0]
@@ -44,33 +44,31 @@ def solv_line_pkg_to_nevra(line):
     s_spl = pkg.split("-")
     return "-".join(s_spl[:-1]) + '.' + s_spl[-1]
 
-if len(sys.argv) != 3:
-    print("""Goes through all repos (expect for @System) in debugdata and removes all packages
-that are not present in solver.result or in testcase.t jobs.
+parser = argparse.ArgumentParser(description="Goes through all repos (expect for @System) in debugdata and removes all packages that are not present in solver.result or in testcase.t jobs.",
+                                 epilog="Hint: If we have 2 different results (like picking older dependency in one run vs not in another) it is useful to combine both results in solver.result and minimize the debugdata.")
 
-Usage: minimize_debugdata.py <debugdata_path_rpms> <output_debugdata_rpms_path>
+parser.add_argument("input_dir", help="Path to the rpms directory in debugdata to minimize")
+parser.add_argument("output_dir", help="Directory name where the minimized debugdata will be written")
+parser.add_argument("--keep-all-versions", action="store_true", help="Keep packages from solver.result and testcase.t jobs in all versions")
+parser.add_argument("--keep-installed", action="store_true", help="In addition to packages from solver.result and testcase.t also keep packages from @System (installed)")
 
-Hint:
-If we have 2 different results (like picking older dependency in one run vs not in another)
-it is useful to combine both results in solver.result and minimize the debugdata.
-""")
-    sys.exit(0)
+args = parser.parse_args()
 
-onlyfiles = [f for f in listdir(sys.argv[1]) if isfile(join(sys.argv[1], f))]
+onlyfiles = [f for f in listdir(args.input_dir) if isfile(join(args.input_dir, f))]
 
-if os.path.exists(sys.argv[2]):
-    shutil.rmtree(sys.argv[2])
-os.makedirs(sys.argv[2])
+if os.path.exists(args.output_dir):
+    shutil.rmtree(args.output_dir)
+os.makedirs(args.output_dir)
 
 repos = []
 system_repo_pkgs = []
 pkgs_to_keep_per_repo = {}
 for f in onlyfiles:
-    path_in = join(sys.argv[1], f)
-    path_out = join(sys.argv[2], f)
+    path_in = join(args.input_dir, f)
+    path_out = join(args.output_dir, f)
     if f.endswith(".repo.gz") and f.endswith("@System.repo.gz"):
         repo_contents = []
-        with gzip.open(join(sys.argv[1], f), "rt") as fin:
+        with gzip.open(join(str(args.input_dir), f), "rt") as fin:
             repo_contents = fin.readlines()
         for line in repo_contents:
             if line.startswith("=Pkg: "):
@@ -143,7 +141,7 @@ for repo in repos:
         continue
     print(repo_name)
     repo_contents = []
-    with gzip.open(join(sys.argv[1], repo), "rt") as fin:
+    with gzip.open(join(str(args.input_dir), repo), "rt") as fin:
         repo_contents = fin.readlines()
     keep = True
     for line in repo_contents:
@@ -155,11 +153,12 @@ for repo in repos:
         if line.startswith("=Pkg: "):
             pkg = solv_line_pkg_to_nevra(line)
             keep = False
-            keep |= should_keep(pkg, pkgs_to_keep_per_repo[repo_name], 1)
-            keep |= should_keep(pkg, system_repo_pkgs, 0)
+            keep |= should_keep(pkg, pkgs_to_keep_per_repo[repo_name], args.keep_all_versions)
+            if (args.keep_installed):
+                keep |= should_keep(pkg, system_repo_pkgs, args.keep_all_versions)
         if keep:
             pruned_repo.append(line)
 
-    with gzip.open(join(sys.argv[2], repo), "wt") as fout:
+    with gzip.open(join(args.output_dir, repo), "wt") as fout:
         for line in pruned_repo:
             fout.write(line)
