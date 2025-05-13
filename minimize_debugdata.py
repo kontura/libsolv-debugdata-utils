@@ -19,6 +19,13 @@ def add_pkg_to_dict(pkgs_to_keep_per_repo, pkg_repo_line):
         list_of_pkgs.append(pkg_name)
     pkgs_to_keep_per_repo[repo_name] = list_of_pkgs
 
+def solv_line_pkg_to_nevra(line):
+    # remove ending new line
+    pkg = line[:-1]
+    # remove "=Pkg: " and make it a nevra
+    pkg = pkg[6:].replace(' ', '-')
+    s_spl = pkg.split("-")
+    return "-".join(s_spl[:-1]) + '.' + s_spl[-1]
 
 if len(sys.argv) != 3:
     print("""Goes through all repos (expect for @System) in debugdata and removes all packages
@@ -39,10 +46,19 @@ if os.path.exists(sys.argv[2]):
 os.makedirs(sys.argv[2])
 
 repos = []
+system_repo_pkgs = []
 pkgs_to_keep_per_repo = {}
 for f in onlyfiles:
     path_in = join(sys.argv[1], f)
     path_out = join(sys.argv[2], f)
+    if f.endswith(".repo.gz") and f.endswith("@System.repo.gz"):
+        repo_contents = []
+        with gzip.open(join(sys.argv[1], f), "rt") as fin:
+            repo_contents = fin.readlines()
+        for line in repo_contents:
+            if line.startswith("=Pkg: "):
+                system_repo_pkgs.append(solv_line_pkg_to_nevra(line))
+
     if f.endswith(".repo.gz") and not f.endswith("@System.repo.gz"):
         repos.append(f)
         continue
