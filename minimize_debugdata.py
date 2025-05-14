@@ -118,7 +118,7 @@ for f in onlyfiles:
     copyfile(path_in, path_out)
 
 
-if args.keep_all_versions:
+if args.keep_all:
     pkg_names_to_keep_per_repo = {}
     for repo_id, pkgs in pkgs_to_keep_per_repo.items():
         name_list = set()
@@ -157,7 +157,7 @@ for repo in repos:
             keep = False
         if line.startswith("=Pkg: "):
             pkg = solv_line_pkg_to_nevra(line)
-            if args.keep_all_versions:
+            if args.keep_all:
                 pkg = nevra_to_name(pkg)
             keep = False
             keep |= pkg in pkgs_to_keep_per_repo[repo_name]
